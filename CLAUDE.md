@@ -25,7 +25,7 @@ Zustand + IndexedDB + Vercel
 | 4 | IndexedDB caching + first-run UX | ✅ done (Playwright 4/4) |
 | 5 | Mobile responsive + edge cases | backlog |
 
-Current sprint contract: @sprint_contract_3.md
+Current sprint contract: @docs/sprints/sprint_contract_4.md
 
 ## Key Design Decisions
 
@@ -38,4 +38,9 @@ Current sprint contract: @sprint_contract_3.md
 
 1. Read this file
 2. Read `spec.md` (full feature list + sprint plans)
-3. Read current `sprint_contract_N.md`
+3. Read current `docs/sprints/sprint_contract_N.md`
+
+## Folder Convention
+
+- `docs/sprints/` — 스프린트 계약서 (sprint_contract_N.md)
+- `docs/planning/` — Planner Q&A 대화 파일 (feedback_N_topic.md)
