@@ -11,7 +11,7 @@ export default function UploadOverlay() {
   const [browserSupported, setBrowserSupported] = useState(true)
 
   useEffect(() => {
-    setBrowserSupported(typeof window.showDirectoryPicker === 'function')
+    setBrowserSupported(typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function')
   }, [])
 
   // GPS 없는 사진만 → 안내 표시
