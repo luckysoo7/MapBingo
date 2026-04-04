@@ -42,7 +42,7 @@ self.onmessage = async (event: MessageEvent) => {
     try {
       const exif = await exifr.parse(file, { gps: true, exif: true })
 
-      if (!exif || exif.latitude == null || exif.longitude == null) {
+      if (!exif || !Number.isFinite(exif.latitude) || !Number.isFinite(exif.longitude)) {
         skippedNoGps++
         self.postMessage({ type: 'progress', processed: i + 1, total })
         continue

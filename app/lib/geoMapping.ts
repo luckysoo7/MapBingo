@@ -54,6 +54,7 @@ export async function loadGeoJSON(): Promise<FeatureCollection> {
 // GPS → 행정구역 매핑 (bbox 사전 필터 → point-in-polygon)
 export function findDistrict(lat: number, lng: number) {
   if (!districtIndex) return null
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
 
   const pt = point([lng, lat])
 
