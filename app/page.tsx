@@ -5,14 +5,13 @@ import TopBar from '@/app/components/TopBar'
 import UploadOverlay from '@/app/components/UploadOverlay'
 import ProgressBar from '@/app/components/ProgressBar'
 import StatsCard from '@/app/components/StatsCard'
+import SavePrompt from '@/app/components/SavePrompt'
 import { useCacheRestore } from '@/app/hooks/useCacheRestore'
-import { useCacheSync } from '@/app/hooks/useCacheSync'
 
 const MapView = dynamic(() => import('@/app/components/MapView'), { ssr: false })
 
 export default function Home() {
   useCacheRestore()
-  useCacheSync()
 
   return (
     <main className="relative w-screen h-screen overflow-hidden">
@@ -24,6 +23,7 @@ export default function Home() {
         <UploadOverlay />
         <ProgressBar />
         <StatsCard />
+        <SavePrompt />
       </div>
     </main>
   )

@@ -13,7 +13,8 @@ export function useCacheRestore() {
 
     loadCache().then((cached) => {
       if (!cached) return
-      const { setParseResult, setDistrictStats } = useAppStore.getState()
+      const { setParseResult, setDistrictStats, setRestoredFromCache } = useAppStore.getState()
+      setRestoredFromCache(true)
       setParseResult(cached.photos, 0, 0)
       setDistrictStats(cached.stats)
       console.log('[SnapRoute] 캐시 복원:', cached.stats.length, '개 행정구역')

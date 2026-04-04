@@ -17,12 +17,18 @@ type AppState = {
   // 선택된 행정구역 (통계 카드)
   selectedDistrict: DistrictStats | null
 
+  // 캐시 UX
+  restoredFromCache: boolean
+  savePromptDismissed: boolean
+
   // 액션
   setStatus: (status: ParseStatus) => void
   setProgress: (processed: number, total: number) => void
   setParseResult: (photos: PhotoData[], skippedHeic: number, skippedNoGps: number) => void
   setDistrictStats: (stats: DistrictStats[]) => void
   selectDistrict: (district: DistrictStats | null) => void
+  setRestoredFromCache: (v: boolean) => void
+  dismissSavePrompt: () => void
   reset: () => void
 }
 
@@ -39,6 +45,8 @@ export const useAppStore = create<AppState>((set) => ({
   photos: [],
   districtStats: [],
   selectedDistrict: null,
+  restoredFromCache: false,
+  savePromptDismissed: false,
 
   setStatus: (status) => set({ status }),
   setProgress: (processed, total) => set({ progress: { processed, total } }),
@@ -46,6 +54,8 @@ export const useAppStore = create<AppState>((set) => ({
     set({ photos, skippedHeic, skippedNoGps, status: 'done' }),
   setDistrictStats: (districtStats) => set({ districtStats }),
   selectDistrict: (selectedDistrict) => set({ selectedDistrict }),
+  setRestoredFromCache: (restoredFromCache) => set({ restoredFromCache }),
+  dismissSavePrompt: () => set({ savePromptDismissed: true }),
   reset: () =>
     set({
       status: 'idle',
@@ -55,6 +65,8 @@ export const useAppStore = create<AppState>((set) => ({
       photos: [],
       districtStats: [],
       selectedDistrict: null,
+      restoredFromCache: false,
+      savePromptDismissed: false,
     }),
 }))
 

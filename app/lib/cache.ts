@@ -49,14 +49,14 @@ export async function clearCache(): Promise<void> {
 }
 
 export function isCacheEnabled(): boolean {
-  if (typeof window === 'undefined') return true
-  return localStorage.getItem('snaproute-cache') !== 'off'
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem('snaproute-cache') === 'on'
 }
 
 export function setCacheEnabled(enabled: boolean): void {
   if (enabled) {
-    localStorage.removeItem('snaproute-cache')
+    localStorage.setItem('snaproute-cache', 'on')
   } else {
-    localStorage.setItem('snaproute-cache', 'off')
+    localStorage.removeItem('snaproute-cache')
   }
 }

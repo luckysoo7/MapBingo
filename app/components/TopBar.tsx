@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { clearCache, isCacheEnabled, setCacheEnabled } from '@/app/lib/cache'
+import { clearCache, setCacheEnabled } from '@/app/lib/cache'
+import { useAppStore } from '@/app/store/useAppStore'
 
 export default function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [cacheOn, setCacheOn] = useState(true)
   const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => { setCacheOn(isCacheEnabled()) }, [])
+  const status = useAppStore((s) => s.status)
+  const reset = useAppStore((s) => s.reset)
 
   // 메뉴 외부 클릭 → 닫기
   useEffect(() => {
@@ -20,11 +20,11 @@ export default function TopBar() {
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
 
-  const toggleCache = async () => {
-    const next = !cacheOn
-    setCacheOn(next)
-    setCacheEnabled(next)
-    if (!next) await clearCache()
+  const handleReset = async () => {
+    setCacheEnabled(false)
+    await clearCache()
+    reset()
+    setMenuOpen(false)
   }
 
   return (
@@ -53,16 +53,18 @@ export default function TopBar() {
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 top-10 w-56 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-30">
-            <label className="flex items-center justify-between cursor-pointer" data-testid="cache-toggle">
-              <span className="text-sm text-gray-700">데이터 저장 (캐시)</span>
-              <div
-                className={`w-9 h-5 rounded-full relative transition-colors ${cacheOn ? 'bg-green-600' : 'bg-gray-300'}`}
-                onClick={toggleCache}
+          <div className="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-30">
+            {status === 'done' ? (
+              <button
+                data-testid="reset-button"
+                onClick={handleReset}
+                className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-md transition-colors"
               >
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${cacheOn ? 'translate-x-4' : 'translate-x-0.5'}`}/>
-              </div>
-            </label>
+                데이터 초기화
+              </button>
+            ) : (
+              <p className="px-3 py-2 text-sm text-gray-400">분석 완료 후 설정 가능</p>
+            )}
           </div>
         )}
       </div>
