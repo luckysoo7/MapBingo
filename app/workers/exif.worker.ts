@@ -1,9 +1,8 @@
 // Web Worker: EXIF 파싱 + GPS 추출
-// 단일 exifr.parse()로 GPS + 날짜를 한 번에 추출
+// 20장마다 partial 결과를 보내 지도가 점진적으로 색칠됨
 
 import exifr from 'exifr'
 
-// HEIC/HEIF 여부 판단
 function isHeic(file: File): boolean {
   const name = file.name.toLowerCase()
   const type = file.type.toLowerCase()
@@ -15,11 +14,12 @@ function isHeic(file: File): boolean {
   )
 }
 
-// Date → KST 기준 "YYYY-MM-DD"
 function toKstDateString(date: Date): string {
   const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000)
   return kst.toISOString().slice(0, 10)
 }
+
+const PARTIAL_INTERVAL = 20 // GPS 사진 N장마다 중간 결과 전송
 
 self.onmessage = async (event: MessageEvent) => {
   const { type, files } = event.data
@@ -29,6 +29,7 @@ self.onmessage = async (event: MessageEvent) => {
   let skippedHeic = 0
   let skippedNoGps = 0
   const total: number = files.length
+  let lastPartialIndex = 0
 
   for (let i = 0; i < files.length; i++) {
     const file: File = files[i]
@@ -60,6 +61,13 @@ self.onmessage = async (event: MessageEvent) => {
         districtName: '',
         sidoName: '',
       })
+
+      // GPS 사진이 PARTIAL_INTERVAL개 쌓일 때마다 중간 결과 전송
+      if (photos.length - lastPartialIndex >= PARTIAL_INTERVAL) {
+        const newPhotos = photos.slice(lastPartialIndex)
+        self.postMessage({ type: 'partial', photos: newPhotos })
+        lastPartialIndex = photos.length
+      }
     } catch {
       skippedNoGps++
     }
@@ -67,5 +75,7 @@ self.onmessage = async (event: MessageEvent) => {
     self.postMessage({ type: 'progress', processed: i + 1, total })
   }
 
-  self.postMessage({ type: 'result', photos, skippedHeic, skippedNoGps })
+  // 최종 결과: 마지막 partial 이후 남은 사진
+  const remaining = photos.slice(lastPartialIndex)
+  self.postMessage({ type: 'result', photos: remaining, skippedHeic, skippedNoGps })
 }

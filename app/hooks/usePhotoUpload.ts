@@ -13,6 +13,16 @@ function isSupportedImage(file: File): boolean {
   return SUPPORTED_EXTS.has(ext)
 }
 
+// GPS 매핑: PhotoData[]에 행정구역 정보 추가
+function mapPhotosToDistricts(photos: PhotoData[]): PhotoData[] {
+  return photos.map((p) => {
+    const district = findDistrict(p.lat, p.lng)
+    return district
+      ? { ...p, districtCode: district.code, districtName: district.name, sidoName: district.sidoName }
+      : p
+  })
+}
+
 // FileSystemEntry 재귀 순회 → File[] 반환
 async function collectFiles(entry: FileSystemEntry): Promise<File[]> {
   if (entry.isFile) {
@@ -47,6 +57,7 @@ async function collectFiles(entry: FileSystemEntry): Promise<File[]> {
 
 export function usePhotoUpload() {
   const workerRef = useRef<Worker | null>(null)
+  const allPhotosRef = useRef<PhotoData[]>([])
   const { setStatus, setProgress, setParseResult, setDistrictStats, setEmptyFolderWarning, pushDebug, reset } = useAppStore()
 
   const startParsing = useCallback((files: File[]) => {
@@ -56,16 +67,20 @@ export function usePhotoUpload() {
     const supported = files.filter(isSupportedImage)
     pushDebug(`[startParsing] 전체=${total}, 지원형식=${supported.length}, 비지원=${total - supported.length}`)
 
-    // 파일 정보 샘플 (첫 3개)
     files.slice(0, 3).forEach((f, i) => {
       pushDebug(`  파일${i}: ${f.name} (${(f.size / 1024).toFixed(0)}KB, type=${f.type || 'unknown'})`)
     })
 
-    // 이전 Worker 종료
     workerRef.current?.terminate()
+    allPhotosRef.current = []
     reset()
     setStatus('parsing')
     setProgress(0, total)
+
+    // GeoJSON 선행 로딩 (Worker 결과 오기 전에 미리)
+    const geoReady = loadGeoJSON()
+      .then(() => { pushDebug('[geoJSON] 선행 로딩 완료') })
+      .catch((err) => { pushDebug(`[geoJSON 선행 로딩 에러] ${err?.message}`) })
 
     const worker = new Worker(
       new URL('../workers/exif.worker.ts', import.meta.url)
@@ -75,45 +90,48 @@ export function usePhotoUpload() {
 
     worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
       const msg = e.data
+
       if (msg.type === 'progress') {
         setProgress(msg.processed, msg.total)
-      } else if (msg.type === 'result') {
-        pushDebug(`[worker result] GPS=${msg.photos.length}, heic=${msg.skippedHeic}, noGps=${msg.skippedNoGps}`)
 
-        // GPS 사진 샘플 (첫 2개)
-        msg.photos.slice(0, 2).forEach((p, i) => {
-          pushDebug(`  GPS${i}: lat=${p.lat}, lng=${p.lng}, date=${p.date}`)
+      } else if (msg.type === 'partial') {
+        // 점진적 매핑: 새 GPS 사진 → 행정구역 매핑 → 지도 업데이트
+        geoReady.then(() => {
+          const mapped = mapPhotosToDistricts(msg.photos as PhotoData[])
+          allPhotosRef.current.push(...mapped)
+          const stats = aggregateStats(allPhotosRef.current)
+          setDistrictStats(stats)
+          pushDebug(`[partial] +${msg.photos.length}장 → 누적 GPS=${allPhotosRef.current.length}, 행정구역=${stats.length}`)
         })
 
-        pushDebug('[geoJSON] 로딩 시작')
-        loadGeoJSON()
-          .then(() => {
-            pushDebug('[geoJSON] 로딩 완료, 매핑 시작')
-            const mapped: PhotoData[] = msg.photos.map((p) => {
-              const district = findDistrict(p.lat, p.lng)
-              return district
-                ? { ...p, districtCode: district.code, districtName: district.name, sidoName: district.sidoName }
-                : p
-            })
-            const withDistrict = mapped.filter((p) => p.districtCode)
-            pushDebug(`[매핑] 전체=${mapped.length}, 행정구역매칭=${withDistrict.length}, 미매칭=${mapped.length - withDistrict.length}`)
+      } else if (msg.type === 'result') {
+        pushDebug(`[worker result] remaining=${msg.photos.length}, heic=${msg.skippedHeic}, noGps=${msg.skippedNoGps}`)
 
-            const stats = aggregateStats(mapped)
-            pushDebug(`[통계] ${stats.length}개 행정구역`)
-            stats.slice(0, 3).forEach((s) => {
-              pushDebug(`  ${s.sidoName} ${s.name}: ${s.visitDays}일 ${s.photoCount}장`)
-            })
+        geoReady.then(() => {
+          // 남은 사진 매핑
+          if (msg.photos.length > 0) {
+            const mapped = mapPhotosToDistricts(msg.photos as PhotoData[])
+            allPhotosRef.current.push(...mapped)
+          }
 
-            setParseResult(mapped, msg.skippedHeic, msg.skippedNoGps)
-            setDistrictStats(stats)
-            pushDebug('[완료] setDistrictStats 호출됨')
+          const finalPhotos = allPhotosRef.current
+          const stats = aggregateStats(finalPhotos)
+
+          pushDebug(`[최종] GPS=${finalPhotos.length}, 행정구역=${stats.length}`)
+          stats.slice(0, 3).forEach((s) => {
+            pushDebug(`  ${s.sidoName} ${s.name}: ${s.visitDays}일 ${s.photoCount}장`)
           })
-          .catch((err) => {
-            pushDebug(`[geoJSON 에러] ${err?.message || String(err)}`)
-            // GeoJSON 실패해도 파싱 결과는 저장
-            setParseResult(msg.photos as PhotoData[], msg.skippedHeic, msg.skippedNoGps)
-          })
+
+          setParseResult(finalPhotos, msg.skippedHeic, msg.skippedNoGps)
+          setDistrictStats(stats)
+          pushDebug('[완료] setDistrictStats 호출됨')
+        }).catch((err) => {
+          pushDebug(`[geoJSON 에러] ${err?.message || String(err)}`)
+          setParseResult(msg.photos as PhotoData[], msg.skippedHeic, msg.skippedNoGps)
+        })
+
         worker.terminate()
+
       } else if (msg.type === 'error') {
         pushDebug(`[worker error] ${msg.message}`)
         setStatus('error')
@@ -131,7 +149,7 @@ export function usePhotoUpload() {
     pushDebug('[worker] postMessage 전송')
   }, [reset, setStatus, setProgress, setParseResult, setDistrictStats, pushDebug])
 
-  // 드래그앤드롭 핸들러
+  // 드래그앤드롭
   const onDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault()
     setStatus('collecting')
@@ -158,7 +176,7 @@ export function usePhotoUpload() {
     }
   }, [startParsing, setStatus, setEmptyFolderWarning, pushDebug])
 
-  // showDirectoryPicker (데스크톱 Chrome)
+  // showDirectoryPicker (데스크톱 + Android Chrome 146+)
   const onSelectFolder = useCallback(async () => {
     try {
       pushDebug('[folder] showDirectoryPicker 호출')

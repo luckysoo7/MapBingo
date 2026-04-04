@@ -117,7 +117,6 @@ export default function UploadOverlay() {
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*"
           data-testid="file-input"
           className="hidden"
           onChange={(e) => {

@@ -23,6 +23,7 @@ export type DistrictStats = {
 // Web Worker가 메인 스레드로 보내는 메시지
 export type WorkerMessage =
   | { type: 'progress'; processed: number; total: number }
+  | { type: 'partial'; photos: PhotoData[] }
   | { type: 'result'; photos: PhotoData[]; skippedHeic: number; skippedNoGps: number }
   | { type: 'error'; message: string }
 
