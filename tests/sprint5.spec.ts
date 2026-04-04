@@ -42,7 +42,7 @@ test('모바일에서 드래그 안내 텍스트가 숨겨져 있다', async ({ 
   await page.waitForTimeout(2_000)
 
   await expect(page.getByText('사진 폴더를 드래그해서 놓으세요')).not.toBeVisible()
-  await expect(page.getByText('사진 폴더를 선택하세요')).toBeVisible()
+  await expect(page.getByText('여행 사진을 선택하세요')).toBeVisible()
 })
 
 // ── 모바일: StatsCard가 하단 전체 너비로 표시됨 ─────────────────

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { PhotoData, DistrictStats } from '@/app/types'
 
-type ParseStatus = 'idle' | 'parsing' | 'done' | 'error'
+type ParseStatus = 'idle' | 'collecting' | 'parsing' | 'done' | 'error'
 
 type AppState = {
   // 파싱 상태

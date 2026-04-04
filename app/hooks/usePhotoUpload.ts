@@ -5,6 +5,9 @@ import { useAppStore } from '@/app/store/useAppStore'
 import { WorkerMessage, PhotoData } from '@/app/types'
 import { loadGeoJSON, findDistrict, aggregateStats } from '@/app/lib/geoMapping'
 
+// 배치 크기: Worker에 한 번에 보내는 파일 수
+const BATCH_SIZE = 50
+
 // 지원 확장자
 const SUPPORTED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.webp'])
 
@@ -45,15 +48,22 @@ async function collectFiles(entry: FileSystemEntry): Promise<File[]> {
   return []
 }
 
+// 파일 배열을 BATCH_SIZE 단위로 분할
+function chunk<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
 export function usePhotoUpload() {
   const workerRef = useRef<Worker | null>(null)
   const { setStatus, setProgress, setParseResult, setDistrictStats, setEmptyFolderWarning, reset } = useAppStore()
 
+  // 배치 단위로 Worker에 파일을 보내고, 모든 배치 완료 후 결과 수집
   const startParsing = useCallback((files: File[]) => {
-    // HEIC / HEIF 포함 전체 중 지원 형식만 필터
-    const supported = files.filter(isSupportedImage)
     const total = files.length
-
     if (total === 0) return
 
     // 이전 Worker 종료
@@ -62,16 +72,35 @@ export function usePhotoUpload() {
     setStatus('parsing')
     setProgress(0, total)
 
-    // new URL() → Next.js(webpack5)가 worker 파일을 자동으로 번들
     const worker = new Worker(
       new URL('../workers/exif.worker.ts', import.meta.url)
     )
     workerRef.current = worker
 
+    const batches = chunk(files, BATCH_SIZE)
+    let currentBatch = 0
+
     worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
       const msg = e.data
+
       if (msg.type === 'progress') {
-        setProgress(msg.processed, msg.total)
+        setProgress(msg.processed, total)
+      } else if (msg.type === 'batch-done') {
+        currentBatch++
+        if (currentBatch < batches.length) {
+          // 다음 배치 전송
+          const processedBefore = currentBatch * BATCH_SIZE
+          worker.postMessage({
+            type: 'parse-batch',
+            files: batches[currentBatch],
+            batchIndex: currentBatch,
+            totalFiles: total,
+            processedBefore,
+          })
+        } else {
+          // 모든 배치 완료 → 최종 결과 요청
+          worker.postMessage({ type: 'finish' })
+        }
       } else if (msg.type === 'result') {
         // GeoJSON 매핑 (메인 스레드, bbox 최적화로 충분히 빠름)
         loadGeoJSON().then(() => {
@@ -98,13 +127,21 @@ export function usePhotoUpload() {
       worker.terminate()
     }
 
-    // Worker에는 전체 파일 목록 전달 (Worker 내부에서 HEIC 스킵)
-    worker.postMessage({ type: 'parse', files })
+    // 첫 배치 전송
+    worker.postMessage({
+      type: 'parse-batch',
+      files: batches[0],
+      batchIndex: 0,
+      totalFiles: total,
+      processedBefore: 0,
+    })
   }, [reset, setStatus, setProgress, setParseResult, setDistrictStats])
 
   // 드래그앤드롭 핸들러
   const onDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault()
+    setStatus('collecting')
+
     const items = Array.from(e.dataTransfer.items)
     const files: File[] = []
 
@@ -119,16 +156,19 @@ export function usePhotoUpload() {
     if (files.length > 0) {
       startParsing(files)
     } else {
+      setStatus('idle')
       setEmptyFolderWarning(true)
       setTimeout(() => setEmptyFolderWarning(false), 3000)
     }
-  }, [startParsing, setEmptyFolderWarning])
+  }, [startParsing, setStatus, setEmptyFolderWarning])
 
   // showDirectoryPicker (PC Chrome / Android Chrome)
   const onSelectFolder = useCallback(async () => {
     try {
       // @ts-expect-error showDirectoryPicker는 타입 정의가 아직 실험적
       const dirHandle = await window.showDirectoryPicker()
+      setStatus('collecting')
+
       const files: File[] = []
 
       for await (const [, entry] of dirHandle) {
@@ -141,13 +181,15 @@ export function usePhotoUpload() {
       if (files.length > 0) {
         startParsing(files)
       } else {
+        setStatus('idle')
         setEmptyFolderWarning(true)
         setTimeout(() => setEmptyFolderWarning(false), 3000)
       }
     } catch {
       // 사용자가 취소한 경우 — 아무것도 안 함
+      useAppStore.getState().status === 'collecting' && setStatus('idle')
     }
-  }, [startParsing, setEmptyFolderWarning])
+  }, [startParsing, setStatus, setEmptyFolderWarning])
 
   return { onDrop, onSelectFolder, startParsing }
 }

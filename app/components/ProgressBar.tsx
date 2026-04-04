@@ -12,6 +12,15 @@ export default function ProgressBar() {
 
   return (
     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-80 bg-white rounded-xl shadow-lg p-4 border border-gray-100">
+      {status === 'collecting' && (
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-medium text-gray-800">
+            사진 파일 수집 중...
+          </p>
+        </div>
+      )}
+
       {status === 'parsing' && (
         <>
           <p className="text-sm font-medium text-gray-800 mb-2">

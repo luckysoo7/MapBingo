@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/app/store/useAppStore'
 import { usePhotoUpload } from '@/app/hooks/usePhotoUpload'
 
@@ -9,9 +9,13 @@ export default function UploadOverlay() {
   const { onDrop, onSelectFolder, startParsing } = usePhotoUpload()
   const [isDragging, setIsDragging] = useState(false)
   const [browserSupported, setBrowserSupported] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+  const mobileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setBrowserSupported(typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function')
+    // 모바일 감지: 터치 + 좁은 화면 (showDirectoryPicker가 있어도 모바일이면 갤러리 선택기 사용)
+    setIsMobile('ontouchstart' in window && window.innerWidth < 768)
   }, [])
 
   // GPS 없는 사진만 → 안내 표시
@@ -46,8 +50,8 @@ export default function UploadOverlay() {
     )
   }
 
-  // 파싱 중이거나 완료 후엔 오버레이 숨김
-  if (status === 'parsing' || status === 'done') return null
+  // 수집/파싱 중이거나 완료 후엔 오버레이 숨김
+  if (status === 'collecting' || status === 'parsing' || status === 'done') return null
 
   return (
     <div
@@ -81,7 +85,7 @@ export default function UploadOverlay() {
             사진 폴더를 드래그해서 놓으세요
           </p>
           <p className="sm:hidden text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
-            사진 폴더를 선택하세요
+            여행 사진을 선택하세요
           </p>
           <p className="text-[13px] text-gray-400 leading-relaxed">
             GPS가 담긴 JPEG · PNG 사진을 자동으로 인식합니다<br/>
@@ -103,12 +107,34 @@ export default function UploadOverlay() {
           </p>
         )}
 
-        {/* 버튼 또는 미지원 안내 */}
-        {browserSupported ? (
+        {/* 버튼: 모바일 → 갤러리 선택, 데스크톱 → 폴더 선택 */}
+        {isMobile ? (
+          <>
+            <button
+              onClick={() => mobileInputRef.current?.click()}
+              className="px-12 py-3.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] font-medium
+                         active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full"
+            >
+              사진 선택하기
+            </button>
+            <input
+              ref={mobileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              data-testid="file-input"
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? [])
+                if (files.length > 0) startParsing(files)
+              }}
+            />
+          </>
+        ) : browserSupported ? (
           <button
             onClick={onSelectFolder}
-            className="px-12 py-3.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
-                       hover:bg-[#2D6A4F] hover:text-white transition-colors duration-150 w-full sm:w-auto"
+            className="px-8 py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[13px] font-medium
+                       hover:bg-[#2D6A4F] hover:text-white transition-colors duration-150"
           >
             폴더 선택하기
           </button>
@@ -121,17 +147,19 @@ export default function UploadOverlay() {
           </div>
         )}
 
-        {/* 테스트용 hidden file input */}
-        <input
-          type="file"
-          multiple
-          data-testid="file-input"
-          className="hidden"
-          onChange={(e) => {
-            const files = Array.from(e.target.files ?? [])
-            if (files.length > 0) startParsing(files)
-          }}
-        />
+        {/* 테스트용 hidden file input (모바일이 아닐 때만, 모바일은 위에서 처리) */}
+        {!isMobile && (
+          <input
+            type="file"
+            multiple
+            data-testid="file-input"
+            className="hidden"
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? [])
+              if (files.length > 0) startParsing(files)
+            }}
+          />
+        )}
       </div>
     </div>
   )
