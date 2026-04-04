@@ -76,51 +76,42 @@ export default function UploadOverlay() {
           </svg>
         </div>
 
-        {/* 텍스트 */}
+        {/* 텍스트 — 데스크톱: 드래그 안내, 모바일: 사진 선택 안내 */}
         <div className="text-center flex flex-col gap-2">
-          {hasDirectoryPicker ? (
-            <p className="text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
-              사진 폴더를 드래그하거나 선택하세요
-            </p>
-          ) : (
-            <p className="text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
-              여행 사진을 선택하세요
-            </p>
-          )}
+          <p className="hidden sm:block text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
+            사진 폴더를 드래그해서 놓으세요
+          </p>
+          <p className="sm:hidden text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
+            여행 사진을 선택하세요
+          </p>
           <p className="text-[13px] text-gray-400 leading-relaxed">
             GPS가 담긴 JPEG · PNG 사진을 자동으로 인식합니다<br/>
             사진은 기기 밖으로 전송되지 않아요
           </p>
         </div>
 
-        {/* 빈 폴�� 경고 */}
+        {/* 구분선 — 데스크톱만 */}
+        <div className="hidden sm:flex items-center gap-3 w-full">
+          <div className="flex-1 h-px bg-gray-100" />
+          <span className="text-[11px] text-gray-300 tracking-widest">또는</span>
+          <div className="flex-1 h-px bg-gray-100" />
+        </div>
+
+        {/* 빈 폴더 경고 */}
         {emptyFolderWarning && (
           <p data-testid="empty-folder-warning" className="text-[13px] text-red-500 font-medium">
             폴더에 사진이 없습니다
           </p>
         )}
 
-        {/* 버튼: API 지원 여부로 분기 (화면 크기 무관) */}
-        {hasDirectoryPicker ? (
-          <button
-            onClick={onSelectFolder}
-            className="px-8 py-2.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
-                       hover:bg-[#2D6A4F] hover:text-white active:bg-[#2D6A4F] active:text-white transition-colors duration-150"
-          >
-            폴더 선택하기
-          </button>
-        ) : (
-          <button
-            data-testid="unsupported-browser"
-            onClick={() => fileInputRef.current?.click()}
-            className="px-8 py-3.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] font-medium
-                       active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full sm:w-auto"
-          >
-            사진 선택하기
-          </button>
-        )}
-
-        {/* 파일 선택기 (showDirectoryPicker 미지원 브라우저용 + 테스트용) */}
+        {/* 1순위: 사진 선택하기 (input type file — 모든 기기에서 동작) */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="px-12 py-3.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
+                     hover:bg-[#2D6A4F] hover:text-white active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full sm:w-auto"
+        >
+          사진 선택하기
+        </button>
         <input
           ref={fileInputRef}
           type="file"
@@ -133,6 +124,17 @@ export default function UploadOverlay() {
             if (files.length > 0) startParsing(files)
           }}
         />
+
+        {/* 2순위: 폴더 전체 선택 (showDirectoryPicker 지원 시에만, 데스크톱 전용 보조 옵션) */}
+        {hasDirectoryPicker && (
+          <button
+            onClick={onSelectFolder}
+            data-testid="folder-picker"
+            className="hidden sm:inline text-[12px] text-gray-400 underline underline-offset-2 hover:text-gray-600 transition-colors"
+          >
+            PC에서 폴더 전체를 선택하려면
+          </button>
+        )}
       </div>
     </div>
   )
