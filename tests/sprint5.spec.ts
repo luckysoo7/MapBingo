@@ -34,15 +34,18 @@ test('모바일에서 UploadOverlay 카드가 뷰포트 안에 있다', async ({
   expect(box.width).toBeLessThan(MOBILE.width)
 })
 
-// ── 모바일: "드래그해서 놓으세요" 텍스트가 보이지 않음 ───────────
-test('모바일에서 드래그 안내 텍스트가 숨겨져 있다', async ({ page }) => {
+// ── 모바일: showDirectoryPicker 미지원 환경에서 올바른 텍스트 ────
+test('showDirectoryPicker 미지원 시 "여행 사진을 선택하세요"가 표시된다', async ({ page }) => {
+  await page.addInitScript(() => {
+    delete (window as Record<string, unknown>)['showDirectoryPicker']
+  })
   await page.setViewportSize(MOBILE)
   await page.goto('/')
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(2_000)
 
-  await expect(page.getByText('사진 폴더를 드래그해서 놓으세요')).not.toBeVisible()
   await expect(page.getByText('여행 사진을 선택하세요')).toBeVisible()
+  await expect(page.getByText('사진 선택하기')).toBeVisible()
 })
 
 // ── 모바일: StatsCard가 하단 전체 너비로 표시됨 ─────────────────
@@ -67,18 +70,18 @@ test('모바일에서 StatsCard가 하단 전체 너비로 표시된다', async 
   expect(w).toBeGreaterThanOrEqual(MOBILE.width - 2) // border 오차 허용
 })
 
-// ── 미지원 브라우저 안내 표시 ────────────────────────────────────
-test('showDirectoryPicker 미지원 시 안내 메시지가 표시된다', async ({ page }) => {
+// ── 미지원 브라우저 → 파일 선택 버튼 표시 ───────────────────────
+test('showDirectoryPicker 미지원 시 "사진 선택하기" 버튼이 표시된다', async ({ page }) => {
   await page.addInitScript(() => {
-    // showDirectoryPicker 제거하여 미지원 환경 시뮬레이션
     delete (window as Record<string, unknown>)['showDirectoryPicker']
   })
   await page.goto('/')
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(2_000)
 
+  // "폴더 선택하기" 대신 "사진 선택하기" 버튼이 나와야 함
   await expect(page.locator('[data-testid="unsupported-browser"]')).toBeVisible()
-  await expect(page.getByText('Chrome 브라우저를 사용해 주세요')).toBeVisible()
+  await expect(page.getByText('사진 선택하기')).toBeVisible()
 })
 
 // ── GPS 없는 사진만 업로드 시 안내 메시지 ────────────────────────

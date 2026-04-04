@@ -51,7 +51,15 @@ test('첫 방문 시 (캐시 없음) 업로드 오버레이가 표시된다', as
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(2_000)
 
-  await expect(page.getByText('사진 폴더를 드래그해서 놓으세요')).toBeVisible()
+  // showDirectoryPicker 지원 여부에 따라 다른 텍스트
+  const hasDirPicker = await page.evaluate(() =>
+    typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function'
+  )
+  if (hasDirPicker) {
+    await expect(page.getByText('사진 폴더를 드래그하거나 선택하세요')).toBeVisible()
+  } else {
+    await expect(page.getByText('여행 사진을 선택하세요')).toBeVisible()
+  }
 })
 
 // ── 기준: 캐시 저장 → 리로드 → 복원 ────────────────────────────
@@ -125,8 +133,15 @@ test('캐시 off 상태에서 리로드하면 오버레이가 표시된다', asy
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(3_000)
 
-  // 오버레이가 다시 보여야 함
-  await expect(page.getByText('사진 폴더를 드래그해서 놓으세요')).toBeVisible({ timeout: 5_000 })
+  // 오버레이가 다시 보여야 함 (showDirectoryPicker 여부에 따라 텍스트 다름)
+  const hasDirPicker2 = await page.evaluate(() =>
+    typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function'
+  )
+  if (hasDirPicker2) {
+    await expect(page.getByText('사진 폴더를 드래그하거나 선택하세요')).toBeVisible({ timeout: 5_000 })
+  } else {
+    await expect(page.getByText('여행 사진을 선택하세요')).toBeVisible({ timeout: 5_000 })
+  }
 
   // 정리 (기본값 OFF이므로 키 제거)
   await page.evaluate(() => { localStorage.removeItem('mapbingo-cache') })

@@ -8,11 +8,11 @@ export default function UploadOverlay() {
   const { status, skippedNoGps, skippedHeic, photos, emptyFolderWarning } = useAppStore()
   const { onDrop, onSelectFolder, startParsing } = usePhotoUpload()
   const [isDragging, setIsDragging] = useState(false)
-  const [browserSupported, setBrowserSupported] = useState(true)
-  const mobileInputRef = useRef<HTMLInputElement>(null)
+  const [hasDirectoryPicker, setHasDirectoryPicker] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setBrowserSupported(typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function')
+    setHasDirectoryPicker(typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function')
   }, [])
 
   // GPS 없는 사진만 → 안내 표시
@@ -67,7 +67,7 @@ export default function UploadOverlay() {
           }
         `}
       >
-        {/* 카메�� 아이콘 */}
+        {/* 카메라 아이콘 */}
         <div className="w-14 h-14 rounded-[14px] bg-[#2D6A4F]/10 flex items-center justify-center">
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
             <rect x="3" y="8" width="22" height="16" rx="2.5" stroke="#2D6A4F" strokeWidth="1.6"/>
@@ -76,77 +76,56 @@ export default function UploadOverlay() {
           </svg>
         </div>
 
-        {/* 텍스트 — 데스크톱: 드래그 안내 / 모바일: 사진 선택 안내 */}
+        {/* 텍스트 */}
         <div className="text-center flex flex-col gap-2">
-          <p className="hidden sm:block text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
-            사진 폴더를 드래그해서 놓으세요
-          </p>
-          <p className="sm:hidden text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
-            여행 사진을 선택하세요
-          </p>
+          {hasDirectoryPicker ? (
+            <p className="text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
+              사진 폴더를 드래그하거나 선택하세요
+            </p>
+          ) : (
+            <p className="text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
+              여행 사진을 선택하세요
+            </p>
+          )}
           <p className="text-[13px] text-gray-400 leading-relaxed">
             GPS가 담긴 JPEG · PNG 사진을 자동으로 인식합니다<br/>
             사진은 기기 밖으로 전송되지 않아요
           </p>
         </div>
 
-        {/* 구분선 — 데스크톱만 표시 */}
-        <div className="hidden sm:flex items-center gap-3 w-full">
-          <div className="flex-1 h-px bg-gray-100" />
-          <span className="text-[11px] text-gray-300 tracking-widest">또는</span>
-          <div className="flex-1 h-px bg-gray-100" />
-        </div>
-
-        {/* 빈 폴더 경고 */}
+        {/* 빈 폴�� 경고 */}
         {emptyFolderWarning && (
           <p data-testid="empty-folder-warning" className="text-[13px] text-red-500 font-medium">
             폴더에 사진이 없습니다
           </p>
         )}
 
-        {/* 모바일 버튼: <input type="file"> 기반 네이티브 사진 선택기 (CSS로 sm 미만에서만 표시) */}
-        <button
-          onClick={() => mobileInputRef.current?.click()}
-          className="sm:hidden px-12 py-3.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] font-medium
-                     active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full"
-        >
-          사진 선택하기
-        </button>
-        <input
-          ref={mobileInputRef}
-          type="file"
-          multiple
-          accept="image/*"
-          data-testid="file-input-mobile"
-          className="hidden"
-          onChange={(e) => {
-            const files = Array.from(e.target.files ?? [])
-            if (files.length > 0) startParsing(files)
-          }}
-        />
-
-        {/* 데스크톱 버튼: showDirectoryPicker 또는 미지원 안내 (CSS로 sm 이상에서만 표시) */}
-        {browserSupported ? (
+        {/* 버튼: API 지원 여부로 분기 (화면 크기 무관) */}
+        {hasDirectoryPicker ? (
           <button
             onClick={onSelectFolder}
-            className="hidden sm:block px-8 py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[13px] font-medium
-                       hover:bg-[#2D6A4F] hover:text-white transition-colors duration-150"
+            className="px-8 py-2.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
+                       hover:bg-[#2D6A4F] hover:text-white active:bg-[#2D6A4F] active:text-white transition-colors duration-150"
           >
             폴더 선택하기
           </button>
         ) : (
-          <div data-testid="unsupported-browser" className="hidden sm:flex text-center flex-col gap-2">
-            <p className="text-[13px] text-red-500 font-medium">
-              이 브라우저는 폴더 선택을 지원하지 않습니다
-            </p>
-            <p className="text-[12px] text-gray-400">Chrome 브라우저를 사용해 주세요</p>
-          </div>
+          <button
+            data-testid="unsupported-browser"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-8 py-3.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] font-medium
+                       active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full sm:w-auto"
+          >
+            사진 선택하기
+          </button>
         )}
 
-        {/* 테스트용 hidden file input */}
+        {/* 파일 선택기 (showDirectoryPicker 미지원 브라우저용 + 테스트용) */}
         <input
+          ref={fileInputRef}
           type="file"
           multiple
+          accept="image/*"
           data-testid="file-input"
           className="hidden"
           onChange={(e) => {

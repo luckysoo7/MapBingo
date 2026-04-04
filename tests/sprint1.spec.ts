@@ -27,11 +27,16 @@ test('초기 화면: 지도 + 업로드 오버레이가 표시된다', async ({ 
   // 로고
   await expect(page.getByText('MapBingo')).toBeVisible()
 
-  // 업로드 안내 (브라우저 지원 여부에 따라 버튼 또는 미지원 안내)
-  await expect(page.getByText('사진 폴더를 드래그해서 놓으세요')).toBeVisible()
-  const hasButton = await page.getByText('폴더 선택하기').isVisible().catch(() => false)
-  if (!hasButton) {
-    await expect(page.locator('[data-testid="unsupported-browser"]')).toBeVisible()
+  // 업로드 안내 (showDirectoryPicker 지원 여부에 따라 다른 텍스트)
+  const hasDirPicker = await page.evaluate(() =>
+    typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function'
+  )
+  if (hasDirPicker) {
+    await expect(page.getByText('사진 폴더를 드래그하거나 선택하세요')).toBeVisible()
+    await expect(page.getByText('폴더 선택하기')).toBeVisible()
+  } else {
+    await expect(page.getByText('여행 사진을 선택하세요')).toBeVisible()
+    await expect(page.getByText('사진 선택하기')).toBeVisible()
   }
 })
 

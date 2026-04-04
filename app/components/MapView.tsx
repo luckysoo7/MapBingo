@@ -39,6 +39,28 @@ export default function MapView() {
     const ro = new ResizeObserver(() => { m.resize() })
     ro.observe(containerRef.current!)
 
+    // WebGL Context Loss 복구 (Android Chrome: 파일 선택기 열면 GPU 리소스 회수됨)
+    const canvas = m.getCanvas()
+    const onContextLost = (e: Event) => {
+      e.preventDefault()
+      console.warn('[MapBingo] WebGL context lost')
+    }
+    const onContextRestored = () => {
+      console.log('[MapBingo] WebGL context restored')
+      m.triggerRepaint()
+    }
+    canvas.addEventListener('webglcontextlost', onContextLost)
+    canvas.addEventListener('webglcontextrestored', onContextRestored)
+
+    // 탭 복귀 시 강제 리페인트 (파일 선택기에서 돌아올 때 흰 화면 방지)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && mapRef.current) {
+        mapRef.current.resize()
+        mapRef.current.triggerRepaint()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
     m.on('load', async () => {
       try {
         const geojson = await loadGeoJSON()
@@ -110,6 +132,9 @@ export default function MapView() {
     })
 
     return () => {
+      canvas.removeEventListener('webglcontextlost', onContextLost)
+      canvas.removeEventListener('webglcontextrestored', onContextRestored)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       ro.disconnect()
       m.remove()
       mapRef.current = null
