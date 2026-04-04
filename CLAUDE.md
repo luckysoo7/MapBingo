@@ -1,4 +1,4 @@
-# SnapRoute — Project Map
+# MapBingo — Project Map
 
 ## What Is This?
 

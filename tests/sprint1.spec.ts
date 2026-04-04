@@ -25,7 +25,7 @@ test('초기 화면: 지도 + 업로드 오버레이가 표시된다', async ({ 
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
 
   // 로고
-  await expect(page.getByText('SnapRoute')).toBeVisible()
+  await expect(page.getByText('MapBingo')).toBeVisible()
 
   // 업로드 안내 (브라우저 지원 여부에 따라 버튼 또는 미지원 안내)
   await expect(page.getByText('사진 폴더를 드래그해서 놓으세요')).toBeVisible()

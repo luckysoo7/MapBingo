@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SnapRoute",
+  title: "MapBingo",
   description: "사진 속 GPS로 나만의 여행 지도를 만들어보세요",
 };
 

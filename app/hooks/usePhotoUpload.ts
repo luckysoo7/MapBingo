@@ -84,7 +84,7 @@ export function usePhotoUpload() {
           const stats = aggregateStats(mapped)
           setParseResult(mapped, msg.skippedHeic, msg.skippedNoGps)
           setDistrictStats(stats)
-          console.log('[SnapRoute] DistrictStats:', stats)
+          console.log('[MapBingo] DistrictStats:', stats)
         })
         worker.terminate()
       } else if (msg.type === 'error') {

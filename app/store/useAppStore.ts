@@ -38,7 +38,7 @@ type AppState = {
 
 // Playwright 테스트에서 mock 데이터 주입용
 declare global {
-  interface Window { __snaprouteStore?: typeof useAppStore }
+  interface Window { __mapbingoStore?: typeof useAppStore }
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -78,5 +78,5 @@ export const useAppStore = create<AppState>((set) => ({
 }))
 
 if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-  window.__snaprouteStore = useAppStore
+  window.__mapbingoStore = useAppStore
 }

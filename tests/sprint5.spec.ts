@@ -54,7 +54,7 @@ test('모바일에서 StatsCard가 하단 전체 너비로 표시된다', async 
 
   // mock 데이터로 StatsCard 표시
   await page.evaluate(() => {
-    window.__snaprouteStore?.getState().selectDistrict({
+    window.__mapbingoStore?.getState().selectDistrict({
       code: '11140', name: '마포구', sidoName: '서울특별시',
       visitDays: 5, photoCount: 10, firstVisit: '2024-01-01', lastVisit: '2024-03-15'
     })

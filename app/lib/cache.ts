@@ -1,6 +1,6 @@
 import type { PhotoData, DistrictStats } from '@/app/types'
 
-const DB_NAME = 'snaproute'
+const DB_NAME = 'mapbingo'
 const DB_VERSION = 1
 const STORE_NAME = 'cache'
 
@@ -50,13 +50,13 @@ export async function clearCache(): Promise<void> {
 
 export function isCacheEnabled(): boolean {
   if (typeof window === 'undefined') return false
-  return localStorage.getItem('snaproute-cache') === 'on'
+  return localStorage.getItem('mapbingo-cache') === 'on'
 }
 
 export function setCacheEnabled(enabled: boolean): void {
   if (enabled) {
-    localStorage.setItem('snaproute-cache', 'on')
+    localStorage.setItem('mapbingo-cache', 'on')
   } else {
-    localStorage.removeItem('snaproute-cache')
+    localStorage.removeItem('mapbingo-cache')
   }
 }

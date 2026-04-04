@@ -36,7 +36,7 @@ export default function TopBar() {
           <path d="M8 18 Q11 14 14 18" stroke="#2D6A4F" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
           <line x1="8" y1="18" x2="14" y2="18" stroke="#2D6A4F" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
-        <span className="text-[14px] font-semibold text-gray-900 tracking-tight">SnapRoute</span>
+        <span className="text-[14px] font-semibold text-gray-900 tracking-tight">MapBingo</span>
       </div>
 
       <div className="relative" ref={menuRef}>

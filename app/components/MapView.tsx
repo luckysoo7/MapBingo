@@ -103,9 +103,9 @@ export default function MapView() {
         m.on('mouseleave', 'districts-fill', () => { m.getCanvas().style.cursor = '' })
 
         setLayersReady(true)
-        console.log('[SnapRoute] GeoJSON 레이어 로드 완료')
+        console.log('[MapBingo] GeoJSON 레이어 로드 완료')
       } catch (e) {
-        console.error('[SnapRoute] GeoJSON 로드 실패:', e)
+        console.error('[MapBingo] GeoJSON 로드 실패:', e)
       }
     })
 
@@ -137,7 +137,7 @@ export default function MapView() {
 
     const source = mapRef.current.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined
     source?.setData(updated)
-    console.log('[SnapRoute] 색칠 업데이트:', districtStats.length, '개 행정구역')
+    console.log('[MapBingo] 색칠 업데이트:', districtStats.length, '개 행정구역')
   }, [districtStats, layersReady])
 
   return <div ref={containerRef} className="w-full h-full" />

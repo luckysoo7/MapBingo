@@ -17,7 +17,7 @@ export function useCacheRestore() {
       setRestoredFromCache(true)
       setParseResult(cached.photos, 0, 0)
       setDistrictStats(cached.stats)
-      console.log('[SnapRoute] 캐시 복원:', cached.stats.length, '개 행정구역')
+      console.log('[MapBingo] 캐시 복원:', cached.stats.length, '개 행정구역')
     }).catch(() => {
       // IndexedDB 접근 실패 시 무시 — 첫 방문처럼 동작
     })
