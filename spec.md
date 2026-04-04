@@ -1,7 +1,7 @@
 # SnapRoute — 제품 스펙 (Planner 산출물)
 
-> feedback_01~04 기획 과정의 최종 결론. Generator가 이 파일을 기반으로 스프린트별 코드 구현.
-> 기술 구현 세부사항은 각 스프린트 계약서(sprint_contract_N.md)에서 결정.
+> **이 문서는 MVP 착수 전 초기 기획안입니다. 구현 중 변경된 결정이 있으며, 현재 상태는 CLAUDE.md를 참고하세요.**
+> feedback_01~04 기획 과정의 최종 결론. 각 스프린트에서 실제 합의된 내용은 `docs/sprints/sprint_contract_N.md` 참고.
 
 ---
 
