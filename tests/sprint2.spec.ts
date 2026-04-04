@@ -50,7 +50,7 @@ test('GPS 없는 사진 업로드 후 MapLibre 에러가 없다', async ({ page 
   await page.waitForTimeout(3_000)
 
   await uploadFiles(page, [path.join(FIXTURE_DIR, 'no_gps.jpg')])
-  await expect(page.getByText(/위치 정보 없음/)).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText(/위치 정보 없음/).first()).toBeVisible({ timeout: 10_000 })
 
   const maplibreTypeErrors = errors.filter(e => e.includes('Expected value to be of type'))
   expect(maplibreTypeErrors).toHaveLength(0)

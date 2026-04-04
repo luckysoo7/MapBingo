@@ -11,7 +11,10 @@ export default function StatsCard() {
   return (
     <div
       data-testid="stats-card"
-      className="absolute bottom-6 left-4 z-20 w-64 rounded-xl bg-white/95 backdrop-blur shadow-lg border border-gray-200 p-4"
+      className="absolute z-20
+                 bottom-0 left-0 w-full rounded-t-xl
+                 sm:bottom-6 sm:left-4 sm:w-64 sm:rounded-xl
+                 bg-white/95 backdrop-blur shadow-lg border border-gray-200 p-4"
     >
       <div className="flex items-start justify-between mb-3">
         <div>

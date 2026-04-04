@@ -1,13 +1,50 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '@/app/store/useAppStore'
 import { usePhotoUpload } from '@/app/hooks/usePhotoUpload'
 
 export default function UploadOverlay() {
-  const { status } = useAppStore()
+  const { status, skippedNoGps, skippedHeic, photos, emptyFolderWarning } = useAppStore()
   const { onDrop, onSelectFolder, startParsing } = usePhotoUpload()
   const [isDragging, setIsDragging] = useState(false)
+  const [browserSupported, setBrowserSupported] = useState(true)
+
+  useEffect(() => {
+    setBrowserSupported(typeof window.showDirectoryPicker === 'function')
+  }, [])
+
+  // GPS 없는 사진만 → 안내 표시
+  const noGpsOnly = status === 'done' && photos.length === 0 && (skippedNoGps > 0 || skippedHeic > 0)
+
+  if (noGpsOnly) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        <div
+          data-testid="no-gps-warning"
+          className="max-w-[460px] w-[calc(100%-32px)] rounded-2xl p-8 sm:p-12 flex flex-col items-center gap-4
+                     bg-white/88 backdrop-blur-sm border-[1.5px] border-dashed border-gray-300"
+        >
+          <div className="w-14 h-14 rounded-[14px] bg-gray-100 flex items-center justify-center">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="10" stroke="#999" strokeWidth="1.6"/>
+              <path d="M14 9v6M14 18v.5" stroke="#999" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <div className="text-center flex flex-col gap-2">
+            <p className="text-[16px] font-semibold text-gray-900 tracking-tight">
+              GPS 정보가 있는 사진을 찾지 못했습니다
+            </p>
+            <p className="text-[13px] text-gray-400 leading-relaxed">
+              {skippedNoGps > 0 && `${skippedNoGps}장 위치 정보 없음`}
+              {skippedNoGps > 0 && skippedHeic > 0 && ' · '}
+              {skippedHeic > 0 && `${skippedHeic}장 미지원 형식`}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // 파싱 중이거나 완료 후엔 오버레이 숨김
   if (status === 'parsing' || status === 'done') return null
@@ -21,7 +58,7 @@ export default function UploadOverlay() {
     >
       <div
         className={`
-          w-[460px] rounded-2xl p-12 flex flex-col items-center gap-5 transition-all duration-200
+          max-w-[460px] w-[calc(100%-32px)] rounded-2xl p-8 sm:p-12 flex flex-col items-center gap-5 transition-all duration-200
           bg-white/88 backdrop-blur-sm
           ${isDragging
             ? 'border-2 border-[#2D6A4F] bg-[#2D6A4F]/5 scale-[1.02]'
@@ -38,10 +75,13 @@ export default function UploadOverlay() {
           </svg>
         </div>
 
-        {/* 텍스트 */}
+        {/* 텍스트 — 모바일에서 드래그 문구 숨김 */}
         <div className="text-center flex flex-col gap-2">
-          <p className="text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
+          <p className="hidden sm:block text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
             사진 폴더를 드래그해서 놓으세요
+          </p>
+          <p className="sm:hidden text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
+            사진 폴더를 선택하세요
           </p>
           <p className="text-[13px] text-gray-400 leading-relaxed">
             GPS가 담긴 JPEG · PNG 사진을 자동으로 인식합니다<br/>
@@ -49,23 +89,39 @@ export default function UploadOverlay() {
           </p>
         </div>
 
-        {/* 구분선 */}
-        <div className="flex items-center gap-3 w-full">
+        {/* 구분선 — 모바일에서 숨김 */}
+        <div className="hidden sm:flex items-center gap-3 w-full">
           <div className="flex-1 h-px bg-gray-100" />
           <span className="text-[11px] text-gray-300 tracking-widest">또는</span>
           <div className="flex-1 h-px bg-gray-100" />
         </div>
 
-        {/* 버튼 */}
-        <button
-          onClick={onSelectFolder}
-          className="px-8 py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[13px] font-medium
-                     hover:bg-[#2D6A4F] hover:text-white transition-colors duration-150"
-        >
-          폴더 선택하기
-        </button>
+        {/* 빈 폴더 경고 */}
+        {emptyFolderWarning && (
+          <p data-testid="empty-folder-warning" className="text-[13px] text-red-500 font-medium">
+            폴더에 사진이 없습니다
+          </p>
+        )}
 
-        {/* 테스트용 hidden file input (Playwright에서 setInputFiles로 접근) */}
+        {/* 버튼 또는 미지원 안내 */}
+        {browserSupported ? (
+          <button
+            onClick={onSelectFolder}
+            className="px-12 py-3.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
+                       hover:bg-[#2D6A4F] hover:text-white transition-colors duration-150 w-full sm:w-auto"
+          >
+            폴더 선택하기
+          </button>
+        ) : (
+          <div data-testid="unsupported-browser" className="text-center flex flex-col gap-2">
+            <p className="text-[13px] text-red-500 font-medium">
+              이 브라우저는 폴더 선택을 지원하지 않습니다
+            </p>
+            <p className="text-[12px] text-gray-400">Chrome 브라우저를 사용해 주세요</p>
+          </div>
+        )}
+
+        {/* 테스트용 hidden file input */}
         <input
           type="file"
           multiple

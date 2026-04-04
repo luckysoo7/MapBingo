@@ -21,6 +21,9 @@ type AppState = {
   restoredFromCache: boolean
   savePromptDismissed: boolean
 
+  // 엣지 케이스 경고
+  emptyFolderWarning: boolean
+
   // 액션
   setStatus: (status: ParseStatus) => void
   setProgress: (processed: number, total: number) => void
@@ -29,6 +32,7 @@ type AppState = {
   selectDistrict: (district: DistrictStats | null) => void
   setRestoredFromCache: (v: boolean) => void
   dismissSavePrompt: () => void
+  setEmptyFolderWarning: (v: boolean) => void
   reset: () => void
 }
 
@@ -47,6 +51,7 @@ export const useAppStore = create<AppState>((set) => ({
   selectedDistrict: null,
   restoredFromCache: false,
   savePromptDismissed: false,
+  emptyFolderWarning: false,
 
   setStatus: (status) => set({ status }),
   setProgress: (processed, total) => set({ progress: { processed, total } }),
@@ -56,6 +61,7 @@ export const useAppStore = create<AppState>((set) => ({
   selectDistrict: (selectedDistrict) => set({ selectedDistrict }),
   setRestoredFromCache: (restoredFromCache) => set({ restoredFromCache }),
   dismissSavePrompt: () => set({ savePromptDismissed: true }),
+  setEmptyFolderWarning: (emptyFolderWarning) => set({ emptyFolderWarning }),
   reset: () =>
     set({
       status: 'idle',
@@ -67,6 +73,7 @@ export const useAppStore = create<AppState>((set) => ({
       selectedDistrict: null,
       restoredFromCache: false,
       savePromptDismissed: false,
+      emptyFolderWarning: false,
     }),
 }))
 

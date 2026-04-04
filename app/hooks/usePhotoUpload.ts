@@ -47,7 +47,7 @@ async function collectFiles(entry: FileSystemEntry): Promise<File[]> {
 
 export function usePhotoUpload() {
   const workerRef = useRef<Worker | null>(null)
-  const { setStatus, setProgress, setParseResult, setDistrictStats, reset } = useAppStore()
+  const { setStatus, setProgress, setParseResult, setDistrictStats, setEmptyFolderWarning, reset } = useAppStore()
 
   const startParsing = useCallback((files: File[]) => {
     // HEIC / HEIF 포함 전체 중 지원 형식만 필터
@@ -116,8 +116,13 @@ export function usePhotoUpload() {
       }
     }
 
-    if (files.length > 0) startParsing(files)
-  }, [startParsing])
+    if (files.length > 0) {
+      startParsing(files)
+    } else {
+      setEmptyFolderWarning(true)
+      setTimeout(() => setEmptyFolderWarning(false), 3000)
+    }
+  }, [startParsing, setEmptyFolderWarning])
 
   // showDirectoryPicker (PC Chrome / Android Chrome)
   const onSelectFolder = useCallback(async () => {
@@ -133,11 +138,16 @@ export function usePhotoUpload() {
         }
       }
 
-      if (files.length > 0) startParsing(files)
+      if (files.length > 0) {
+        startParsing(files)
+      } else {
+        setEmptyFolderWarning(true)
+        setTimeout(() => setEmptyFolderWarning(false), 3000)
+      }
     } catch {
       // 사용자가 취소한 경우 — 아무것도 안 함
     }
-  }, [startParsing])
+  }, [startParsing, setEmptyFolderWarning])
 
   return { onDrop, onSelectFolder, startParsing }
 }

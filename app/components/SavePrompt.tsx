@@ -38,10 +38,10 @@ export default function SavePrompt() {
   return (
     <div
       data-testid="save-prompt"
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30
                  bg-white rounded-2xl shadow-lg
-                 flex items-center gap-5 px-6 py-4
-                 whitespace-nowrap"
+                 flex sm:flex-row flex-col items-center gap-4 sm:gap-5 px-6 py-4
+                 sm:w-auto w-[calc(100%-32px)]"
       style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.13)' }}
     >
       {/* 아이콘 */}
