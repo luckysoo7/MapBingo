@@ -9,13 +9,10 @@ export default function UploadOverlay() {
   const { onDrop, onSelectFolder, startParsing } = usePhotoUpload()
   const [isDragging, setIsDragging] = useState(false)
   const [browserSupported, setBrowserSupported] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
   const mobileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setBrowserSupported(typeof (window as unknown as Record<string, unknown>).showDirectoryPicker === 'function')
-    // 모바일 감지: 터치 + 좁은 화면 (showDirectoryPicker가 있어도 모바일이면 갤러리 선택기 사용)
-    setIsMobile('ontouchstart' in window && window.innerWidth < 768)
   }, [])
 
   // GPS 없는 사진만 → 안내 표시
@@ -70,7 +67,7 @@ export default function UploadOverlay() {
           }
         `}
       >
-        {/* 카메라 아이콘 */}
+        {/* 카메�� 아이콘 */}
         <div className="w-14 h-14 rounded-[14px] bg-[#2D6A4F]/10 flex items-center justify-center">
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
             <rect x="3" y="8" width="22" height="16" rx="2.5" stroke="#2D6A4F" strokeWidth="1.6"/>
@@ -79,7 +76,7 @@ export default function UploadOverlay() {
           </svg>
         </div>
 
-        {/* 텍스트 — 모바일에서 드래그 문구 숨김 */}
+        {/* 텍스트 — 데스크톱: 드래그 안내 / 모바일: 사진 선택 안내 */}
         <div className="text-center flex flex-col gap-2">
           <p className="hidden sm:block text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
             사진 폴더를 드래그해서 놓으세요
@@ -93,7 +90,7 @@ export default function UploadOverlay() {
           </p>
         </div>
 
-        {/* 구분선 — 모바일에서 숨김 */}
+        {/* 구분선 — 데스크톱만 표시 */}
         <div className="hidden sm:flex items-center gap-3 w-full">
           <div className="flex-1 h-px bg-gray-100" />
           <span className="text-[11px] text-gray-300 tracking-widest">또는</span>
@@ -107,39 +104,38 @@ export default function UploadOverlay() {
           </p>
         )}
 
-        {/* 버튼: 모바일 → 갤러리 선택, 데스크톱 → 폴더 선택 */}
-        {isMobile ? (
-          <>
-            <button
-              onClick={() => mobileInputRef.current?.click()}
-              className="px-12 py-3.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] font-medium
-                         active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full"
-            >
-              사진 선택하기
-            </button>
-            <input
-              ref={mobileInputRef}
-              type="file"
-              multiple
-              accept="image/*"
-              data-testid="file-input"
-              className="hidden"
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? [])
-                if (files.length > 0) startParsing(files)
-              }}
-            />
-          </>
-        ) : browserSupported ? (
+        {/* 모바일 버튼: <input type="file"> 기반 네이티브 사진 선택기 (CSS로 sm 미만에서만 표시) */}
+        <button
+          onClick={() => mobileInputRef.current?.click()}
+          className="sm:hidden px-12 py-3.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] font-medium
+                     active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full"
+        >
+          사진 선택하기
+        </button>
+        <input
+          ref={mobileInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          data-testid="file-input-mobile"
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? [])
+            if (files.length > 0) startParsing(files)
+          }}
+        />
+
+        {/* 데스크톱 버튼: showDirectoryPicker 또는 미지원 안내 (CSS로 sm 이상에서만 표시) */}
+        {browserSupported ? (
           <button
             onClick={onSelectFolder}
-            className="px-8 py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[13px] font-medium
+            className="hidden sm:block px-8 py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[13px] font-medium
                        hover:bg-[#2D6A4F] hover:text-white transition-colors duration-150"
           >
             폴더 선택하기
           </button>
         ) : (
-          <div data-testid="unsupported-browser" className="text-center flex flex-col gap-2">
+          <div data-testid="unsupported-browser" className="hidden sm:flex text-center flex-col gap-2">
             <p className="text-[13px] text-red-500 font-medium">
               이 브라우저는 폴더 선택을 지원하지 않습니다
             </p>
@@ -147,19 +143,17 @@ export default function UploadOverlay() {
           </div>
         )}
 
-        {/* 테스트용 hidden file input (모바일이 아닐 때만, 모바일은 위에서 처리) */}
-        {!isMobile && (
-          <input
-            type="file"
-            multiple
-            data-testid="file-input"
-            className="hidden"
-            onChange={(e) => {
-              const files = Array.from(e.target.files ?? [])
-              if (files.length > 0) startParsing(files)
-            }}
-          />
-        )}
+        {/* 테스트용 hidden file input */}
+        <input
+          type="file"
+          multiple
+          data-testid="file-input"
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? [])
+            if (files.length > 0) startParsing(files)
+          }}
+        />
       </div>
     </div>
   )

@@ -23,11 +23,11 @@ export type DistrictStats = {
 // Web Worker가 메인 스레드로 보내는 메시지
 export type WorkerMessage =
   | { type: 'progress'; processed: number; total: number }
-  | { type: 'batch-done'; photos: PhotoData[]; skippedHeic: number; skippedNoGps: number }
   | { type: 'result'; photos: PhotoData[]; skippedHeic: number; skippedNoGps: number }
   | { type: 'error'; message: string }
 
 // 메인 스레드가 Web Worker로 보내는 메시지
-export type WorkerInput =
-  | { type: 'parse-batch'; files: File[]; batchIndex: number; totalFiles: number; processedBefore: number }
-  | { type: 'finish' }
+export type WorkerInput = {
+  type: 'parse'
+  files: File[]
+}
