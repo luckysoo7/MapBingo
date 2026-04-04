@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/app/store/useAppStore'
 import { usePhotoUpload } from '@/app/hooks/usePhotoUpload'
+// useAppStore는 onChange에서 직접 사용 (pushDebug)
 
 export default function UploadOverlay() {
   const { status, skippedNoGps, skippedHeic, photos, emptyFolderWarning } = useAppStore()
@@ -121,6 +122,7 @@ export default function UploadOverlay() {
           className="hidden"
           onChange={(e) => {
             const files = Array.from(e.target.files ?? [])
+            useAppStore.getState().pushDebug(`[input onChange] files=${files.length}`)
             if (files.length > 0) startParsing(files)
           }}
         />

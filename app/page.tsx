@@ -6,6 +6,7 @@ import UploadOverlay from '@/app/components/UploadOverlay'
 import ProgressBar from '@/app/components/ProgressBar'
 import StatsCard from '@/app/components/StatsCard'
 import SavePrompt from '@/app/components/SavePrompt'
+import DiagnosticPanel from '@/app/components/DiagnosticPanel'
 import { useCacheRestore } from '@/app/hooks/useCacheRestore'
 
 const MapView = dynamic(() => import('@/app/components/MapView'), { ssr: false })
@@ -24,6 +25,7 @@ export default function Home() {
         <ProgressBar />
         <StatsCard />
         <SavePrompt />
+        <DiagnosticPanel />
       </div>
     </main>
   )
