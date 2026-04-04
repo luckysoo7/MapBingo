@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/app/store/useAppStore'
 import { usePhotoUpload } from '@/app/hooks/usePhotoUpload'
-// useAppStore는 onChange에서 직접 사용 (pushDebug)
 
 export default function UploadOverlay() {
   const { status, skippedNoGps, skippedHeic, photos, emptyFolderWarning } = useAppStore()
@@ -77,13 +76,13 @@ export default function UploadOverlay() {
           </svg>
         </div>
 
-        {/* 텍스트 — 데스크톱: 드래그 안내, 모바일: 사진 선택 안내 */}
+        {/* 텍스트 */}
         <div className="text-center flex flex-col gap-2">
           <p className="hidden sm:block text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
             사진 폴더를 드래그해서 놓으세요
           </p>
           <p className="sm:hidden text-[18px] font-semibold text-gray-900 tracking-tight leading-snug">
-            여행 사진을 선택하세요
+            사진 폴더를 선택하세요
           </p>
           <p className="text-[13px] text-gray-400 leading-relaxed">
             GPS가 담긴 JPEG · PNG 사진을 자동으로 인식합니다<br/>
@@ -105,14 +104,24 @@ export default function UploadOverlay() {
           </p>
         )}
 
-        {/* 1순위: 사진 선택하기 (input type file — 모든 기기에서 동작) */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="px-12 py-3.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
-                     hover:bg-[#2D6A4F] hover:text-white active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full sm:w-auto"
-        >
-          사진 선택하기
-        </button>
+        {/* 메인 액션: 폴더 선택 or 미지원 안내 */}
+        {hasDirectoryPicker ? (
+          <button
+            onClick={onSelectFolder}
+            data-testid="folder-picker"
+            className="px-12 py-3.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
+                       hover:bg-[#2D6A4F] hover:text-white active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full sm:w-auto"
+          >
+            폴더 선택하기
+          </button>
+        ) : (
+          <p data-testid="unsupported-browser" className="text-[13px] text-gray-500 text-center leading-relaxed">
+            이 브라우저는 폴더 선택을 지원하지 않습니다<br/>
+            <span className="text-[12px] text-gray-400">Chrome 86 이상을 사용해주세요</span>
+          </p>
+        )}
+
+        {/* Playwright setInputFiles 전용 숨김 인풋 */}
         <input
           ref={fileInputRef}
           type="file"
@@ -125,17 +134,6 @@ export default function UploadOverlay() {
             if (files.length > 0) startParsing(files)
           }}
         />
-
-        {/* 2순위: 폴더 전체 선택 (showDirectoryPicker 지원 시에만, 데스크톱 전용 보조 옵션) */}
-        {hasDirectoryPicker && (
-          <button
-            onClick={onSelectFolder}
-            data-testid="folder-picker"
-            className="hidden sm:inline text-[12px] text-gray-400 underline underline-offset-2 hover:text-gray-600 transition-colors"
-          >
-            PC에서 폴더 전체를 선택하려면
-          </button>
-        )}
       </div>
     </div>
   )

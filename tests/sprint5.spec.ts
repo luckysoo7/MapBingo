@@ -34,25 +34,19 @@ test('모바일에서 UploadOverlay 카드가 뷰포트 안에 있다', async ({
   expect(box.width).toBeLessThan(MOBILE.width)
 })
 
-// ── 모바일: "사진 선택하기" 버튼이 항상 1순위 ────────────────────
-test('모바일에서 "사진 선택하기" 버튼이 1순위로 표시된다', async ({ page }) => {
+// ── 모바일: "폴더 선택하기" 버튼이 표시됨 ────────────────────────
+test('모바일에서 "폴더 선택하기" 버튼이 표시된다', async ({ page }) => {
   await page.setViewportSize(MOBILE)
   await page.goto('/')
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(2_000)
 
-  // 모바일 텍스트 + 사진 선택 버튼
-  await expect(page.getByText('여행 사진을 선택하세요')).toBeVisible()
-  await expect(page.getByText('사진 선택하기')).toBeVisible()
+  // 모바일 텍스트 + 폴더 선택 버튼
+  await expect(page.getByText('사진 폴더를 선택하세요')).toBeVisible()
+  await expect(page.locator('[data-testid="folder-picker"]')).toBeVisible()
 
-  // ��스크톱 드래그 텍스트는 숨겨져야 함
+  // 데스크톱 드래그 텍스트는 숨겨져야 함
   await expect(page.getByText('사진 폴더를 드래그해서 놓으세요')).not.toBeVisible()
-
-  // 폴더 선택 링크는 모바일에서 숨겨져야 함 (hidden sm:inline)
-  const folderLink = page.locator('[data-testid="folder-picker"]')
-  if (await folderLink.count() > 0) {
-    await expect(folderLink).not.toBeVisible()
-  }
 })
 
 // ── 모바일: StatsCard가 하단 전체 너비로 표시됨 ─────────────────
@@ -77,8 +71,8 @@ test('모바일에서 StatsCard가 하단 전체 너비로 표시된다', async 
   expect(w).toBeGreaterThanOrEqual(MOBILE.width - 2) // border 오차 허용
 })
 
-// ── showDirectoryPicker 미지원 시 폴더 링크 없음 ────────────────
-test('showDirectoryPicker 미지원 시 폴더 선택 링크가 없다', async ({ page }) => {
+// ── showDirectoryPicker 미지원 시 안내 메시지 ────────────────────
+test('showDirectoryPicker 미지원 시 브라우저 안내가 표시된다', async ({ page }) => {
   await page.addInitScript(() => {
     delete (window as Record<string, unknown>)['showDirectoryPicker']
   })
@@ -86,10 +80,10 @@ test('showDirectoryPicker 미지원 시 폴더 선택 링크가 없다', async (
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(2_000)
 
-  // "사진 선택하기"는 항상 표시
-  await expect(page.getByText('사진 선택하기')).toBeVisible()
+  // 미지원 안내 메시지
+  await expect(page.locator('[data-testid="unsupported-browser"]')).toBeVisible()
 
-  // 폴더 선택 링크는 없어야 함
+  // 폴더 선택 버튼은 없어야 함
   await expect(page.locator('[data-testid="folder-picker"]')).toHaveCount(0)
 })
 

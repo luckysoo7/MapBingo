@@ -51,7 +51,7 @@ test('첫 방문 시 (캐시 없음) 업로드 오버레이가 표시된다', as
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(2_000)
 
-  await expect(page.getByText('사진 선택하기')).toBeVisible()
+  await expect(page.locator('[data-testid="folder-picker"]')).toBeVisible()
 })
 
 // ── 기준: 캐시 저장 → 리로드 → 복원 ────────────────────────────
@@ -125,7 +125,7 @@ test('캐시 off 상태에서 리로드하면 오버레이가 표시된다', asy
   await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   await page.waitForTimeout(3_000)
 
-  await expect(page.getByText('사진 선택하기')).toBeVisible({ timeout: 5_000 })
+  await expect(page.locator('[data-testid="folder-picker"]')).toBeVisible({ timeout: 5_000 })
 
   // 정리 (기본값 OFF이므로 키 제거)
   await page.evaluate(() => { localStorage.removeItem('mapbingo-cache') })

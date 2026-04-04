@@ -24,14 +24,18 @@ export default function ProgressBar() {
       {status === 'parsing' && (
         <>
           <p className="text-sm font-medium text-gray-800 mb-2">
-            {processed.toLocaleString()} / {total.toLocaleString()}장 분석 중...
+            {total > 0
+              ? `${processed.toLocaleString()} / ${total.toLocaleString()}장 분석 중...`
+              : '파일 수집 중...'}
           </p>
-          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#2D6A4F] rounded-full transition-all duration-200"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
+          {total > 0 && (
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#2D6A4F] rounded-full transition-all duration-200"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          )}
         </>
       )}
 

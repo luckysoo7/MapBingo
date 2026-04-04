@@ -27,8 +27,8 @@ test('초기 화면: 지도 + 업로드 오버레이가 표시된다', async ({ 
   // 로고
   await expect(page.getByText('MapBingo')).toBeVisible()
 
-  // "사진 선택하기" 버튼이 항상 1순위로 표시
-  await expect(page.getByText('사진 선택하기')).toBeVisible()
+  // "폴더 선택하기" 버튼 표시
+  await expect(page.locator('[data-testid="folder-picker"]')).toBeVisible()
 })
 
 // ── 기준 3: HEIC 스킵 메시지 ────────────────────────────────────

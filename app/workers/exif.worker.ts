@@ -1,5 +1,5 @@
 // Web Worker: EXIF 파싱 + GPS 추출
-// 20장마다 partial 결과를 보내 지도가 점진적으로 색칠됨
+// Legacy parse (드래그앤드롭/테스트) + parse-batch (스트리밍 멀티 워커) 지원
 
 import exifr from 'exifr'
 
@@ -19,63 +19,95 @@ function toKstDateString(date: Date): string {
   return kst.toISOString().slice(0, 10)
 }
 
-const PARTIAL_INTERVAL = 20 // GPS 사진 N장마다 중간 결과 전송
+async function parseOneFile(file: File) {
+  if (isHeic(file)) return 'heic' as const
+  try {
+    const exif = await exifr.parse(file, { gps: true, exif: true })
+    if (!exif || !Number.isFinite(exif.latitude) || !Number.isFinite(exif.longitude)) {
+      return 'noGps' as const
+    }
+    const raw = exif.DateTimeOriginal || exif.CreateDate || exif.ModifyDate
+    return {
+      id: `${file.name}_${file.size}`,
+      lat: exif.latitude,
+      lng: exif.longitude,
+      date: raw ? toKstDateString(new Date(raw)) : '날짜 없음',
+      districtCode: '',
+      districtName: '',
+      sidoName: '',
+    }
+  } catch {
+    return 'noGps' as const
+  }
+}
 
-self.onmessage = async (event: MessageEvent) => {
-  const { type, files } = event.data
-  if (type !== 'parse') return
+// ── Legacy: 단일 parse 요청 (드래그앤드롭, 테스트) ──
+const PARTIAL_INTERVAL = 20
 
+async function handleParse(files: File[]) {
   const photos: object[] = []
   let skippedHeic = 0
   let skippedNoGps = 0
-  const total: number = files.length
+  const total = files.length
   let lastPartialIndex = 0
 
   for (let i = 0; i < files.length; i++) {
-    const file: File = files[i]
-
-    if (isHeic(file)) {
+    const r = await parseOneFile(files[i])
+    if (r === 'heic') {
       skippedHeic++
-      self.postMessage({ type: 'progress', processed: i + 1, total })
-      continue
-    }
-
-    try {
-      const exif = await exifr.parse(file, { gps: true, exif: true })
-
-      if (!exif || !Number.isFinite(exif.latitude) || !Number.isFinite(exif.longitude)) {
-        skippedNoGps++
-        self.postMessage({ type: 'progress', processed: i + 1, total })
-        continue
-      }
-
-      const raw = exif.DateTimeOriginal || exif.CreateDate || exif.ModifyDate
-      const dateStr = raw ? toKstDateString(new Date(raw)) : '날짜 없음'
-
-      photos.push({
-        id: `${file.name}_${file.size}`,
-        lat: exif.latitude,
-        lng: exif.longitude,
-        date: dateStr,
-        districtCode: '',
-        districtName: '',
-        sidoName: '',
-      })
-
-      // GPS 사진이 PARTIAL_INTERVAL개 쌓일 때마다 중간 결과 전송
+    } else if (r === 'noGps') {
+      skippedNoGps++
+    } else {
+      photos.push(r)
       if (photos.length - lastPartialIndex >= PARTIAL_INTERVAL) {
-        const newPhotos = photos.slice(lastPartialIndex)
-        self.postMessage({ type: 'partial', photos: newPhotos })
+        self.postMessage({ type: 'partial', photos: photos.slice(lastPartialIndex) })
         lastPartialIndex = photos.length
       }
-    } catch {
-      skippedNoGps++
     }
-
     self.postMessage({ type: 'progress', processed: i + 1, total })
   }
 
-  // 최종 결과: 마지막 partial 이후 남은 사진
   const remaining = photos.slice(lastPartialIndex)
   self.postMessage({ type: 'result', photos: remaining, skippedHeic, skippedNoGps })
+}
+
+// ── Batch: 스트리밍 멀티 워커용 큐 ──
+const batchQueue: File[][] = []
+let processingBatch = false
+
+async function processBatchQueue() {
+  processingBatch = true
+  while (batchQueue.length > 0) {
+    const files = batchQueue.shift()!
+    const photos: object[] = []
+    let skippedHeic = 0
+    let skippedNoGps = 0
+
+    for (const file of files) {
+      const r = await parseOneFile(file)
+      if (r === 'heic') skippedHeic++
+      else if (r === 'noGps') skippedNoGps++
+      else photos.push(r)
+    }
+
+    self.postMessage({
+      type: 'batch-result',
+      photos,
+      skippedHeic,
+      skippedNoGps,
+      processedCount: files.length,
+    })
+  }
+  processingBatch = false
+}
+
+// ── Message Router ──
+self.onmessage = (event: MessageEvent) => {
+  const msg = event.data
+  if (msg.type === 'parse') {
+    handleParse(msg.files)
+  } else if (msg.type === 'parse-batch') {
+    batchQueue.push(msg.files)
+    if (!processingBatch) processBatchQueue()
+  }
 }

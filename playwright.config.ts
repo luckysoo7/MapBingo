@@ -9,7 +9,7 @@ export default defineConfig({
     headless: true,
   },
   projects: [
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   // dev 서버를 별도로 띄우지 않음 — 이미 실행 중인 서버 사용
   webServer: {
