@@ -6,9 +6,17 @@ import { useAppStore } from '@/app/store/useAppStore'
 
 export default function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [debugOpen, setDebugOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
   const status = useAppStore((s) => s.status)
   const reset = useAppStore((s) => s.reset)
+  const progress = useAppStore((s) => s.progress)
+  const photos = useAppStore((s) => s.photos)
+  const districtStats = useAppStore((s) => s.districtStats)
+  const skippedHeic = useAppStore((s) => s.skippedHeic)
+  const skippedNoGps = useAppStore((s) => s.skippedNoGps)
+  const _debug = useAppStore((s) => s._debug)
 
   // 메뉴 외부 클릭 → 닫기
   useEffect(() => {
@@ -65,6 +73,38 @@ export default function TopBar() {
             ) : (
               <p className="px-3 py-2 text-sm text-gray-400">분석 완료 후 설정 가능</p>
             )}
+            <button
+              onClick={() => { setDebugOpen(!debugOpen); setMenuOpen(false) }}
+              className="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-md transition-colors font-mono"
+            >
+              {debugOpen ? '디버그 닫기' : `디버그 (${status})`}
+            </button>
+          </div>
+        )}
+
+        {/* 디버그 패널 */}
+        {debugOpen && (
+          <div className="absolute right-0 top-10 z-30 bg-black/90 text-green-400 text-[10px] font-mono p-3 rounded-lg w-[320px] max-h-[60vh] overflow-y-auto leading-relaxed shadow-2xl">
+            <div className="flex items-center justify-between mb-2 border-b border-green-900 pb-2">
+              <span className="text-yellow-300 font-bold">DEBUG</span>
+              <button onClick={() => setDebugOpen(false)} className="text-gray-500 hover:text-white">✕</button>
+            </div>
+            <div className="border-b border-green-900 pb-2 mb-2">
+              <p>status: <span className="text-yellow-300">{status}</span></p>
+              <p>progress: {progress.processed}/{progress.total}</p>
+              <p>photos (GPS): <span className="text-yellow-300">{photos.length}</span></p>
+              <p>districts: <span className="text-yellow-300">{districtStats.length}</span></p>
+              <p>skipped HEIC: {skippedHeic}</p>
+              <p>skipped noGPS: {skippedNoGps}</p>
+            </div>
+            <div>
+              {_debug.length === 0 && <p className="text-gray-500">로그 없음</p>}
+              {_debug.map((msg, i) => (
+                <p key={i} className={msg.includes('에러') || msg.includes('error') || msg.includes('crash') ? 'text-red-400' : ''}>
+                  {msg}
+                </p>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -78,14 +78,38 @@ export default function MapView() {
           },
         })
 
+        // 방문 구역 glow 효과 (fill 위, crisp outline 아래)
+        m.addLayer({
+          id: 'districts-outline-glow',
+          type: 'line',
+          source: SOURCE_ID,
+          filter: ['>', ['coalesce', ['get', 'visitDays'], 0], 0],
+          paint: {
+            'line-color': '#52B788',
+            'line-width': 5,
+            'line-opacity': 0.35,
+            'line-blur': 4,
+          },
+        })
+
         m.addLayer({
           id: 'districts-outline',
           type: 'line',
           source: SOURCE_ID,
           paint: {
-            'line-color': '#FFFFFF',
-            'line-width': 0.5,
-            'line-opacity': 0.7,
+            'line-color': [
+              'case',
+              ['>', ['coalesce', ['get', 'visitDays'], 0], 0], '#FFFFFF',
+              '#C8C8C8',
+            ] as maplibregl.ExpressionSpecification,
+            'line-width': [
+              'case',
+              ['<=', ['coalesce', ['get', 'visitDays'], 0], 0],  0.3,
+              ['<=', ['coalesce', ['get', 'visitDays'], 0], 2],  1.0,
+              ['<=', ['coalesce', ['get', 'visitDays'], 0], 7],  1.5,
+              2.0,
+            ] as maplibregl.ExpressionSpecification,
+            'line-opacity': 1,
           },
         })
 
