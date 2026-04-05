@@ -1,5 +1,16 @@
 # MapBingo — Project Map
 
+## ⚠️ Project Status: Concluded (2026-04-05)
+
+웹 MVP 완료 후 모바일 대용량(33K장) 처리를 위해 RN 피벗을 시도했으나,
+브라우저 File System Access API의 구조적 한계(파일 1개씩 I/O, 모바일 ~24분)로
+실사용 불가 판정. 네이티브 앱 없이는 해결 불가한 문제로 결론.
+
+**배포:** Vercel 유지 (데스크톱 소규모 사용 가능)
+**코드:** 아카이브 상태 — 추가 개발 없음
+
+---
+
 ## What Is This?
 
 GPS EXIF photos → visited Korean administrative districts → colored map visualization.
