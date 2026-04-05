@@ -10,32 +10,47 @@ export default function ProgressBar() {
   const { processed, total } = progress
   const percent = total > 0 ? Math.round((processed / total) * 100) : 0
 
+  const isCollecting = status === 'collecting'
+  const isParsing = status === 'parsing'
+  const stepLabel = isCollecting ? '1' : '2'
+
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-80 bg-white/88 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-white/60">
-      {status === 'collecting' && (
-        <div className="flex items-center gap-3">
-          <div className="w-4 h-4 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin flex-shrink-0" />
-          <p className="text-sm font-medium text-gray-800">
-            파일 수집 중
-            {collectingCount > 0 && (
-              <span className="text-gray-400 font-normal"> · {collectingCount.toLocaleString()}개...</span>
-            )}
-          </p>
+    <div className="absolute bottom-[20vh] left-1/2 -translate-x-1/2 z-20 w-80 bg-white/88 backdrop-blur-sm rounded-xl shadow-lg p-5 border border-white/60">
+
+      {/* 단계 인디케이터 */}
+      {(isCollecting || isParsing) && (
+        <div className="flex items-center gap-2 mb-3">
+          <div className={`w-2 h-2 rounded-full ${isCollecting ? 'bg-[#2D6A4F]' : 'bg-gray-200'}`} />
+          <div className={`w-2 h-2 rounded-full ${isParsing ? 'bg-[#2D6A4F]' : 'bg-gray-200'}`} />
+          <span className="text-[11px] text-gray-400 ml-1">{stepLabel} / 2단계</span>
         </div>
       )}
 
-      {status === 'parsing' && (
+      {isCollecting && (
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-gray-800">파일 수집 중</p>
+            {collectingCount > 0 && (
+              <p className="text-xs text-gray-400">{collectingCount.toLocaleString()}개 발견 중...</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isParsing && (
         <>
-          <p className="text-sm font-medium text-gray-800 mb-2">
-            {total > 0 ? (
-              <>
-                EXIF 파싱 중
-                <span className="text-gray-400 font-normal">
-                  {' '}· {processed.toLocaleString()} / {total.toLocaleString()}장 ({percent}%)
-                </span>
-              </>
-            ) : '파일 수집 중...'}
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3.5 h-3.5 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-800">위치 정보 분석 중</p>
+              {total > 0 && (
+                <p className="text-xs text-gray-400">
+                  {processed.toLocaleString()} / {total.toLocaleString()}장 ({percent}%)
+                </p>
+              )}
+            </div>
+          </div>
           {total > 0 && (
             <div className="w-full h-1 bg-gray-100/80 rounded-full overflow-hidden">
               <div
