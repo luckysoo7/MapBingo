@@ -21,6 +21,9 @@ type AppState = {
   restoredFromCache: boolean
   savePromptDismissed: boolean
 
+  // 파일 수집 단계 카운트
+  collectingCount: number
+
   // 엣지 케이스 경고
   emptyFolderWarning: boolean
 
@@ -35,6 +38,7 @@ type AppState = {
   selectDistrict: (district: DistrictStats | null) => void
   setRestoredFromCache: (v: boolean) => void
   dismissSavePrompt: () => void
+  setCollectingCount: (n: number) => void
   setEmptyFolderWarning: (v: boolean) => void
   pushDebug: (msg: string) => void
   reset: () => void
@@ -55,6 +59,7 @@ export const useAppStore = create<AppState>((set) => ({
   selectedDistrict: null,
   restoredFromCache: false,
   savePromptDismissed: false,
+  collectingCount: 0,
   emptyFolderWarning: false,
   _debug: [],
 
@@ -66,6 +71,7 @@ export const useAppStore = create<AppState>((set) => ({
   selectDistrict: (selectedDistrict) => set({ selectedDistrict }),
   setRestoredFromCache: (restoredFromCache) => set({ restoredFromCache }),
   dismissSavePrompt: () => set({ savePromptDismissed: true }),
+  setCollectingCount: (collectingCount) => set({ collectingCount }),
   setEmptyFolderWarning: (emptyFolderWarning) => set({ emptyFolderWarning }),
   pushDebug: (msg) => set((s) => ({ _debug: [...s._debug, `${new Date().toLocaleTimeString()} ${msg}`] })),
   reset: () =>
@@ -79,6 +85,7 @@ export const useAppStore = create<AppState>((set) => ({
       selectedDistrict: null,
       restoredFromCache: false,
       savePromptDismissed: false,
+      collectingCount: 0,
       emptyFolderWarning: false,
       _debug: [...s._debug, `${new Date().toLocaleTimeString()} [reset]`],
     })),

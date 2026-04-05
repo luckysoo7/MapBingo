@@ -69,7 +69,7 @@ export function usePhotoUpload() {
   const workerRef = useRef<Worker | null>(null)
   const workersRef = useRef<Worker[]>([])
   const allPhotosRef = useRef<PhotoData[]>([])
-  const { setStatus, setProgress, setParseResult, setDistrictStats, setEmptyFolderWarning, pushDebug, reset } = useAppStore()
+  const { setStatus, setProgress, setCollectingCount, setParseResult, setDistrictStats, setEmptyFolderWarning, pushDebug, reset } = useAppStore()
 
   // ── 단일 워커 파싱 (드래그앤드롭, 테스트 인풋) ──
   const startParsing = useCallback((files: File[]) => {
@@ -197,7 +197,8 @@ export function usePhotoUpload() {
       workersRef.current.forEach(w => w.terminate())
       allPhotosRef.current = []
       reset()
-      setStatus('parsing')
+      setStatus('collecting')
+      setCollectingCount(0)
 
       // GeoJSON 선행 로딩
       const geoReady = loadGeoJSON()
@@ -272,9 +273,11 @@ export function usePhotoUpload() {
         if (entry.kind === 'file') {
           const file = await entry.getFile()
           fileCount++
+          if (fileCount % 100 === 0) setCollectingCount(fileCount)
           batch.push(file)
 
           if (batch.length >= BATCH_SIZE) {
+            if (useAppStore.getState().status === 'collecting') setStatus('parsing')
             totalDispatched += batch.length
             setProgress(totalProcessed, totalDispatched)
             workers[nextWorker].postMessage({ type: 'parse-batch', files: [...batch] })
@@ -286,6 +289,7 @@ export function usePhotoUpload() {
 
       // 남은 배치 디스패치
       if (batch.length > 0) {
+        if (useAppStore.getState().status === 'collecting') setStatus('parsing')
         totalDispatched += batch.length
         setProgress(totalProcessed, totalDispatched)
         workers[nextWorker].postMessage({ type: 'parse-batch', files: batch })
@@ -313,7 +317,7 @@ export function usePhotoUpload() {
         setStatus('idle')
       }
     }
-  }, [reset, setStatus, setProgress, setParseResult, setDistrictStats, setEmptyFolderWarning, pushDebug])
+  }, [reset, setStatus, setProgress, setCollectingCount, setParseResult, setDistrictStats, setEmptyFolderWarning, pushDebug])
 
   return { onDrop, onSelectFolder, startParsing }
 }

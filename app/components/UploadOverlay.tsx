@@ -106,14 +106,20 @@ export default function UploadOverlay() {
 
         {/* 메인 액션: 폴더 선택 or 미지원 안내 */}
         {hasDirectoryPicker ? (
-          <button
-            onClick={onSelectFolder}
-            data-testid="folder-picker"
-            className="px-12 py-3.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
-                       hover:bg-[#2D6A4F] hover:text-white active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full sm:w-auto"
-          >
-            폴더 선택하기
-          </button>
+          <>
+            <button
+              onClick={onSelectFolder}
+              data-testid="folder-picker"
+              className="px-12 py-3.5 sm:px-8 sm:py-2.5 border-[1.5px] border-[#2D6A4F] rounded-[9px] text-[#2D6A4F] text-[14px] sm:text-[13px] font-medium
+                         hover:bg-[#2D6A4F] hover:text-white active:bg-[#2D6A4F] active:text-white transition-colors duration-150 w-full sm:w-auto"
+            >
+              폴더 선택하기
+            </button>
+            <p className="text-[11px] text-gray-400 text-center leading-relaxed">
+              사진이 많으면 브라우저 파일 읽기 방식의 한계로<br/>
+              최대 수십 분 소요될 수 있습니다
+            </p>
+          </>
         ) : (
           <p data-testid="unsupported-browser" className="text-[13px] text-gray-500 text-center leading-relaxed">
             이 브라우저는 폴더 선택을 지원하지 않습니다<br/>

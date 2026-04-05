@@ -3,7 +3,7 @@
 import { useAppStore } from '@/app/store/useAppStore'
 
 export default function ProgressBar() {
-  const { status, progress, skippedHeic, skippedNoGps } = useAppStore()
+  const { status, progress, skippedHeic, skippedNoGps, collectingCount } = useAppStore()
 
   if (status === 'idle') return null
 
@@ -11,12 +11,15 @@ export default function ProgressBar() {
   const percent = total > 0 ? Math.round((processed / total) * 100) : 0
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-80 bg-white rounded-xl shadow-lg p-4 border border-gray-100">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-80 bg-white/88 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-white/60">
       {status === 'collecting' && (
         <div className="flex items-center gap-3">
-          <div className="w-4 h-4 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-[#2D6A4F] border-t-transparent rounded-full animate-spin flex-shrink-0" />
           <p className="text-sm font-medium text-gray-800">
-            사진 파일 수집 중...
+            파일 수집 중
+            {collectingCount > 0 && (
+              <span className="text-gray-400 font-normal"> · {collectingCount.toLocaleString()}개...</span>
+            )}
           </p>
         </div>
       )}
@@ -24,14 +27,19 @@ export default function ProgressBar() {
       {status === 'parsing' && (
         <>
           <p className="text-sm font-medium text-gray-800 mb-2">
-            {total > 0
-              ? `${processed.toLocaleString()} / ${total.toLocaleString()}장 분석 중...`
-              : '파일 수집 중...'}
+            {total > 0 ? (
+              <>
+                EXIF 파싱 중
+                <span className="text-gray-400 font-normal">
+                  {' '}· {processed.toLocaleString()} / {total.toLocaleString()}장 ({percent}%)
+                </span>
+              </>
+            ) : '파일 수집 중...'}
           </p>
           {total > 0 && (
-            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-gray-100/80 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#2D6A4F] rounded-full transition-all duration-200"
+                className="h-full bg-[#2D6A4F] rounded-full transition-all duration-300"
                 style={{ width: `${percent}%` }}
               />
             </div>
